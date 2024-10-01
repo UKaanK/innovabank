@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:innovabank/models/customer_model.dart';
 import 'package:innovabank/screens/account_screen.dart';
+import 'package:innovabank/services/customer_service.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -42,14 +43,14 @@ class _SignInScreenState extends State<SignInScreen> {
                     keyboardType: TextInputType.number,
                     maxLength: 11,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 20),
+                    style: const TextStyle(fontSize: 20),
                     decoration: InputDecoration(
                       hintText: "TC Kimlik Numaranızı Giriniz",
                       filled: true,
                       fillColor: Colors.grey.shade200,
-                      prefixIcon:
-                          Icon(Icons.person_2_outlined), // Arka plan rengi
-                      contentPadding: EdgeInsets.symmetric(
+                      prefixIcon: const Icon(
+                          Icons.person_2_outlined), // Arka plan rengi
+                      contentPadding: const EdgeInsets.symmetric(
                           vertical: 20.0, horizontal: 15.0),
                       border: OutlineInputBorder(
                         borderRadius:
@@ -59,14 +60,14 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 20,
                 ),
                 SizedBox(
                   width: MediaQuery.of(context).size.width / 1.2,
                   child: TextField(
                     keyboardType: TextInputType.number,
-                    style: TextStyle(fontSize: 20),
+                    style: const TextStyle(fontSize: 20),
                     maxLength: 6,
                     textAlign: TextAlign.center,
                     obscureText: true, // Şifreyi gizlemek için
@@ -74,9 +75,9 @@ class _SignInScreenState extends State<SignInScreen> {
                       hintText: "Şifre Giriniz",
                       filled: true,
                       fillColor: Colors.grey.shade200,
-                      prefixIcon:
-                          Icon(Icons.lock_outline_rounded), // Arka plan rengi
-                      contentPadding: EdgeInsets.symmetric(
+                      prefixIcon: const Icon(
+                          Icons.lock_outline_rounded), // Arka plan rengi
+                      contentPadding: const EdgeInsets.symmetric(
                           vertical: 20.0, horizontal: 15.0),
                       border: OutlineInputBorder(
                         borderRadius:
@@ -86,7 +87,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 20,
                 ),
                 SizedBox(
@@ -100,13 +101,29 @@ class _SignInScreenState extends State<SignInScreen> {
                             BorderRadius.circular(10.0), // Yuvarlak köşeler
                       ),
                     ),
-                    onPressed: () => Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AccountScreen(),
+                    onPressed: () async {
+                      try {
+                        final CustomerService customerService =
+                            CustomerService();
+                        final Customer? customer =
+                            await customerService.getCustomer("3");
 
-                        ),(route) => false),
-                    child: Text(
+                        if (customer != null) {
+                          print(customer.name);
+                        } else {
+                          print("Müşteri bulunamadı.");
+                        }
+                      } catch (e) {
+                        print("Hata: $e");
+                      }
+                      // Navigator.pushAndRemoveUntil(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => AccountScreen(),
+
+                      //   ),(route) => false);
+                    },
+                    child: const Text(
                       'Giriş Yap',
                       style: TextStyle(
                         fontSize: 18.0,

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "563299098397",
+    "project_id": "innovabank-e6e7e",
+    "storage_bucket": "innovabank-e6e7e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:563299098397:android:7d6fb36bf378b935e88bf4",
+        "android_client_info": {
+          "package_name": "com.example.innovabank"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7eOmiVB-JPtWg8CQdFSUJoHQQzkJfD0s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
