@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:innovabank/models/customer_model.dart';
 import 'package:innovabank/screens/account_screen.dart';
+import 'package:innovabank/screens/sign_up_screen.dart';
 import 'package:innovabank/services/customer_service.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -12,6 +13,8 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  final TextEditingController _tcController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,6 +43,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 SizedBox(
                   width: MediaQuery.of(context).size.width / 1.2,
                   child: TextField(
+                    controller: _tcController,
                     keyboardType: TextInputType.number,
                     maxLength: 11,
                     textAlign: TextAlign.center,
@@ -66,6 +70,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 SizedBox(
                   width: MediaQuery.of(context).size.width / 1.2,
                   child: TextField(
+                    controller: _passwordController,
                     keyboardType: TextInputType.number,
                     style: const TextStyle(fontSize: 20),
                     maxLength: 6,
@@ -90,6 +95,20 @@ class _SignInScreenState extends State<SignInScreen> {
                 const SizedBox(
                   height: 20,
                 ),
+                Container(
+                  padding: const EdgeInsets.only(right: 40, bottom: 20),
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SignUpScreen(),
+                        )),
+                    child: Text("Hesabınız Yok Mu ?",
+                        style:
+                            GoogleFonts.arvo(fontSize: 15, color: Colors.red)),
+                  ),
+                ),
                 SizedBox(
                   width: MediaQuery.of(context).size.width / 1.2,
                   height: 60.0, // Buton yüksekliği
@@ -102,34 +121,40 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                     ),
                     onPressed: () async {
+                      String enteredTC = _tcController.text.trim();
+                      String enteredPassword = _passwordController.text.trim();
                       try {
                         final CustomerService customerService =
                             CustomerService();
                         final Customer? customer =
-                            await customerService.getCustomer("3");
+                            await customerService.getCustomer(enteredTC);
 
                         if (customer != null) {
-                          print(customer.name);
+                          // Şifreyi kontrol et
+                          if (customer.password == enteredPassword) {
+                            // Örnek: Şifreyi phoneNumber ile kontrol ediyoruz
+                            print("Giriş başarılı: ${customer.email}");
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    AccountScreen(customer: customer),
+                              ),
+                              (route) => false,
+                            );
+                          } else {
+                            print("Hatalı şifre.");
+                          }
                         } else {
                           print("Müşteri bulunamadı.");
                         }
                       } catch (e) {
                         print("Hata: $e");
                       }
-                      // Navigator.pushAndRemoveUntil(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => AccountScreen(),
-
-                      //   ),(route) => false);
                     },
-                    child: const Text(
-                      'Giriş Yap',
-                      style: TextStyle(
-                        fontSize: 18.0,
-                        color: Colors.red, // Beyaz yazı rengi
-                      ),
-                    ),
+                    child: Text('Giris Yap',
+                        style:
+                            GoogleFonts.arvo(fontSize: 18, color: Colors.red)),
                   ),
                 ),
               ],

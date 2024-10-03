@@ -1,34 +1,29 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:innovabank/models/account_model.dart';
+import 'package:innovabank/utils/iban_generator.dart';
 
 class AccountService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+ // Yeni bir hesap ekleme fonksiyonu
+  Future<void> addAccount(String customerId, String accountType, double balance) async {
+    String iban = generateIban(); // IBAN oluşturuyoruz
 
-  Future<void> addAccount(Account account) async {
-    await _firestore.collection('accounts').add({
-      'accountId': account.accountId,
-      'customerId': account.customerId,
-      'accountType': account.accountType,
-      'iban': account.iban,
-      'balance': account.balance,
-      'createdAt': account.createdAt,
+    var docRef = await _firestore.collection('accounts').add({
+      'customerId': customerId,
+      'accountType': accountType,
+      'balance': balance,
+      'iban': iban, // Oluşturulan IBAN burada saklanacak
+      'createdAt': DateTime.now(),
     });
+
+    print('Hesap eklendi: ${docRef.id}, IBAN: $iban');
   }
 
-  Future<Account?> getAccount(String accountId) async {
-    var docSnapshot = await _firestore.collection('accounts').doc(accountId).get();
-    if (docSnapshot.exists) {
-      var data = docSnapshot.data()!;
-      return Account(
-        accountId: data['accountId'],
-        customerId: data['customerId'],
-        accountType: data['accountType'],
-        iban: data['iban'],
-        balance: data['balance'],
-        createdAt: (data['createdAt'] as Timestamp).toDate(),
-      );
-      
-    }
-    return null;
+ Future<List<Map<String, dynamic>>> getAccounts(String customerId) async {
+    var querySnapshot = await _firestore
+        .collection('accounts') // Hesapların bulunduğu koleksiyon
+        .where('customerId', isEqualTo: customerId) // Müşteri ID'sine göre filtreleme
+        .get();
+
+    return querySnapshot.docs.map((doc) => doc.data()).toList();
   }
 }

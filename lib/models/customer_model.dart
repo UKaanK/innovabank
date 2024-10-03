@@ -6,13 +6,15 @@ class Customer {
   final String email;
   final String phoneNumber;
   final DateTime createdAt;
+  final String password;
 
-  Customer({
+  Customer( {
     required this.customerId,
     required this.name,
     required this.email,
     required this.phoneNumber,
     required this.createdAt,
+    required this.password
   });
 
 
@@ -24,6 +26,7 @@ class Customer {
       email: data['email'],
       phoneNumber: data['phoneNumber'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      password: data["password"]
     );
   }
 
@@ -35,6 +38,7 @@ class Customer {
       'email': email,
       'phoneNumber': phoneNumber,
       'createdAt': createdAt,
+      'password' : password
     };
   }
 }
