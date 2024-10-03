@@ -26,7 +26,9 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAccounts();
+    setState(() {
+      _loadAccounts();
+    });
   }
 
   Future<void> _loadAccounts() async {
@@ -36,7 +38,7 @@ class _AccountScreenState extends State<AccountScreen> {
     });
   }
 
-   // Çıkış onayı penceresi
+  // Çıkış onayı penceresi
   void _showSignOutDialog() {
     showDialog(
       context: context,
@@ -64,11 +66,16 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-    // Kullanıcı çıkış yapma fonksiyonu
+  // Kullanıcı çıkış yapma fonksiyonu
   Future<void> _signOut() async {
     await _auth.signOut(); // Firebase'den çıkış yap
     // Çıkış işleminden sonra yapılacak işlemler (örn. anasayfaya yönlendirme)
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => MainScreen(),), (route) => false);// Giriş sayfasına yönlendir
+    Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainScreen(),
+        ),
+        (route) => false); // Giriş sayfasına yönlendir
   }
 
   @override
@@ -91,9 +98,21 @@ class _AccountScreenState extends State<AccountScreen> {
                     children: [
                       Text(
                         "Hesap bulunamadı.",
-                        style: GoogleFonts.arvo(fontSize: 22, color: Colors.black),
+                        style:
+                            GoogleFonts.arvo(fontSize: 22, color: Colors.black),
                       ),
-                      TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AccounAddScreen(customer:widget.customer),)) , child: Text("Hesap Açmak Ister misiniz ? ",style: GoogleFonts.arvo(fontSize: 15, color: Colors.red,fontWeight:FontWeight.bold)))
+                      TextButton(
+                          onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    AccounAddScreen(customer: widget.customer),
+                              )),
+                          child: Text("Hesap Açmak Ister misiniz ? ",
+                              style: GoogleFonts.arvo(
+                                  fontSize: 15,
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold)))
                     ],
                   ),
                 )
@@ -134,7 +153,8 @@ class _AccountScreenState extends State<AccountScreen> {
                                     ),
                                     const SizedBox(width: 30),
                                     Padding(
-                                      padding: const EdgeInsets.only(left:30,top: 8.0),
+                                      padding: const EdgeInsets.only(
+                                          left: 30, top: 8.0),
                                       child: Text(
                                         account['iban'],
                                         style: const TextStyle(fontSize: 11),
@@ -166,7 +186,19 @@ class _AccountScreenState extends State<AccountScreen> {
           children: [
             const SizedBox(height: 50),
             TextButton(
-              onPressed: () => Navigator.push(context,MaterialPageRoute(builder: (context) => AccounAddScreen(customer: widget.customer),)),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        AccounAddScreen(customer: widget.customer),
+                  ),
+                ).then((value) {
+                  if (value == true) {
+                    _loadAccounts(); // Eğer yeni bir hesap eklenmişse hesapları tekrar yükle
+                  }
+                });
+              },
               child: Text(
                 "Hesap Ekle",
                 style: GoogleFonts.arvo(
@@ -177,7 +209,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             TextButton(
               onPressed: () {
-               return _showSignOutDialog(); // Çıkış onay penceresini göster
+                return _showSignOutDialog(); // Çıkış onay penceresini göster
               },
               child: Text(
                 "Çıkıs Yap",
@@ -192,20 +224,28 @@ class _AccountScreenState extends State<AccountScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         onTap: (value) {
-          if (value==1) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: Colors.grey[200],
-                      elevation: 0,
-                      content: Text("Yapım Aşamasında",textAlign: TextAlign.center,style: TextStyle(color:Colors.red),),
-                      duration: Duration(seconds: 3),
-                    ));
+          if (value == 1) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              backgroundColor: Colors.grey[200],
+              elevation: 0,
+              content: Text(
+                "Yapım Aşamasında",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.red),
+              ),
+              duration: Duration(seconds: 3),
+            ));
           }
-          if (value==2) {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => TransferScreen(account: _accounts,),));
+          if (value == 2) {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TransferScreen(
+                    account: _accounts,
+                  ),
+                ));
           }
           print(value);
-          
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,

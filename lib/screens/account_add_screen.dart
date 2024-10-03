@@ -100,7 +100,7 @@ class _AccounAddScreenState extends State<AccounAddScreen> {
                   print("Bakiye: ${_balanceController.text}");
                   // Hesap oluşturma işlemi için backend servisi çağrılabilir.
                   _accountService.addAccount(widget.customer.customerId, _selectedAccountType!, double.parse(_balanceController.text));
-                  Navigator.pop(context);
+                  Navigator.pop(context,true);
                 } else {
                   // Uyarı ver
                   print("Lütfen tüm bilgileri doldurun.");
