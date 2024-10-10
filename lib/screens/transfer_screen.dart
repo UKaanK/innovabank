@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:innovabank/models/account_model.dart';
@@ -142,6 +143,7 @@ class _TransferScreenState extends State<TransferScreen> {
                       fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               TextField(
+                maxLength: 25,
                 controller: _recipientIbanController,
                 decoration: InputDecoration(
                   hintText: "IBAN",
@@ -194,70 +196,105 @@ class _TransferScreenState extends State<TransferScreen> {
     );
   }
 
-  void _performTransfer() {
-    String fromAccountId = _selectedAccount!; // Kullanıcı seçtiği hesap ID
-    String toAccountIban = _recipientIbanController.text;
-    double? amount = double.tryParse(_amountController.text);
-    String recipientName = _recipientNameController.text;
-    String description = _descriptionController.text;
+Future<void> _performTransfer() async {
+  String fromAccountType = _selectedAccount!; // Kullanıcı seçtiği hesap tipi
+  String toAccountIban = _recipientIbanController.text;
+  double? amount = double.tryParse(_amountController.text);
+  String recipientName = _recipientNameController.text;
+  String description = _descriptionController.text;
 
-    if (fromAccountId.isEmpty ||
-        toAccountIban.isEmpty ||
-        amount == null ||
-        recipientName.isEmpty ||
-        description.isEmpty) {
-      // Hata mesajı göster
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text("Hata"),
-            content: Text("Lütfen tüm alanları doldurun."),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Tamam"),
-              ),
-            ],
-          );
-        },
-      );
-    } else {
-      // Transaction oluştur
-      TransactionModel newTransaction = TransactionModel(
-        fromAccountId: fromAccountId,
-        toAccountIban: toAccountIban,
-        amount: amount,
-        transactionType: 'Transfer',
-        timestamp: DateTime.now(),
-        description: description,
-        recipientName: recipientName,
-      );
-
-      // Firestore'a kaydet
-      FirestoreTransactionService().addTransaction(newTransaction).then((_) {
-        // Başarı mesajı
-        _showSuccessMessage();
-      }).catchError((error) {
-        // Hata mesajı
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: Text("Hata"),
-              content: Text("İşlem sırasında bir hata oluştu: $error"),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("Tamam"),
-                ),
-              ],
-            );
-          },
-        );
-      });
-    }
+  if (fromAccountType.isEmpty ||
+      toAccountIban.isEmpty ||
+      amount == null ||
+      recipientName.isEmpty ||
+      description.isEmpty) {
+    _showErrorMessage("Lütfen tüm alanları doldurun.");
+    return;
   }
+
+  if (toAccountIban.length < 25) {
+    _showErrorMessage("İban Bilgisini Eksiksiz ve Doğru Giriniz");
+    return;
+  }
+
+  try {
+    // Gönderen hesap `accountType`'e göre bulunuyor
+    QuerySnapshot fromAccountSnapshot = await FirebaseFirestore.instance
+        .collection('accounts')
+        .where('accountType', isEqualTo: fromAccountType)
+        .get();
+
+    if (fromAccountSnapshot.docs.isEmpty) {
+      throw Exception("Gönderen hesap bulunamadı.");
+    }
+
+    // Alıcı hesabı IBAN ile kontrol edin
+    QuerySnapshot toAccountSnapshot = await FirebaseFirestore.instance
+        .collection('accounts')
+        .where('iban', isEqualTo: toAccountIban)
+        .get();
+
+    if (toAccountSnapshot.docs.isEmpty) {
+      throw Exception("Alıcı hesap bulunamadı.");
+    }
+
+    // Alıcı hesabının customerId'sini al
+    String recipientCustomerId = toAccountSnapshot.docs.first.get('customerId');
+
+    // Alıcıya ait müşteri bilgilerini kontrol et
+    QuerySnapshot customerSnapshot = await FirebaseFirestore.instance
+        .collection('customers')
+        .where('customerId', isEqualTo: recipientCustomerId)
+        .get();
+
+    // Müşteri bilgisi var mı kontrol et
+    if (customerSnapshot.docs.isNotEmpty) {
+      var customerDoc = customerSnapshot.docs.first; // İlk müşteri dokümanı
+      String customerName = customerDoc.get('name'); // Müşteri adını al
+      
+      // Alıcı adı ile karşılaştırma
+      if (customerName.trim().toLowerCase() != recipientName.trim().toLowerCase()) {
+        throw Exception("Girilen alıcı adı ile IBAN eşleşmiyor.");
+      }
+    } else {
+      throw Exception("Müşteri bilgisi bulunamadı.");
+    }
+
+    // Transaction işlemi burada yapılır
+    await FirestoreTransactionService().performTransaction(
+      fromAccountId: fromAccountSnapshot.docs.first.id,
+      toAccountIban: toAccountIban,
+      amount: amount,
+      recipientName: recipientName,
+      description: description,
+    );
+
+    // Başarı mesajı
+    _showSuccessMessage();
+  } catch (e) {
+    // Hata mesajı
+    _showErrorMessage("İşlem sırasında bir hata oluştu: ${e.toString()}");
+  }
+}
+
+
+void _showErrorMessage(String message) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text("Hata"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Tamam"),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   void _showSuccessMessage() {
     showDialog(

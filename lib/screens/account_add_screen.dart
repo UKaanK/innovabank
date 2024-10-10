@@ -91,28 +91,43 @@ class _AccounAddScreenState extends State<AccounAddScreen> {
             ),
           ),
           ElevatedButton(
-              onPressed: () {
-                if (_selectedAccountType != null &&
-                    _balanceController.text.isNotEmpty) {
+               onPressed: () async {
+    if (_selectedAccountType != null && _balanceController.text.isNotEmpty) {
+      // Mevcut hesapları kontrol et
+      bool hasAccount = await _accountService.hasExistingAccount(widget.customer.customerId);
 
-                  // Hesap türü ve bakiye bilgileri mevcutsa hesap oluşturma işlemini yapın
-                  print("Hesap Türü: $_selectedAccountType");
-                  print("Bakiye: ${_balanceController.text}");
-                  // Hesap oluşturma işlemi için backend servisi çağrılabilir.
-                  _accountService.addAccount(widget.customer.customerId, _selectedAccountType!, double.parse(_balanceController.text));
-                  Navigator.pop(context,true);
-                } else {
-                  // Uyarı ver
-                  print("Lütfen tüm bilgileri doldurun.");
-                }
-              },
-              child: Text("Hesap Olustur",
-                  style: GoogleFonts.arvo(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Colors.red)))
+      if (hasAccount) {
+        // Kullanıcının zaten bir hesabı var
+        _showErrorMessage("Zaten Vadeli veya Vadesiz hesabınız var. Yeni hesap açamazsınız.");
+      } else {
+        // Hesap türü ve bakiye bilgileri mevcutsa hesap oluşturma işlemini yapın
+        print("Hesap Türü: $_selectedAccountType");
+        print("Bakiye: ${_balanceController.text}");
+        _accountService.addAccount(widget.customer.customerId, _selectedAccountType!, double.parse(_balanceController.text));
+        Navigator.pop(context, true);
+      }
+    } else {
+      // Uyarı ver
+      print("Lütfen tüm bilgileri doldurun.");
+    }
+  },
+  child: Text("Hesap Olustur",
+      style: GoogleFonts.arvo(
+          fontWeight: FontWeight.bold,
+          fontSize: 15,
+          color: Colors.red)),
+          )
         ],
       ),
     );
+  }
+  
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.red,
+    ),
+  );
   }
 }

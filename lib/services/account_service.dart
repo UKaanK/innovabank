@@ -17,6 +17,16 @@ class AccountService {
 
     print('Hesap eklendi: ${docRef.id}, IBAN: $iban');
   }
+  //Hesap Sorgulama
+   Future<bool> hasExistingAccount(String customerId) async {
+    // Müşteri ID'sine göre hesapları sorgulayın
+    QuerySnapshot snapshot = await _firestore
+        .collection('accounts')
+        .where('customerId', isEqualTo: customerId)
+        .where('accountType', whereIn: ['Vadeli', 'Vadesiz']) // Vadeli veya Vadesiz hesapları kontrol et
+        .get();
+    return snapshot.docs.isNotEmpty; // Eğer döküman varsa true döndür
+  }
 
  Future<List<Map<String, dynamic>>> getAccounts(String customerId) async {
     var querySnapshot = await _firestore

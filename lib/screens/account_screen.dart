@@ -19,23 +19,28 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> {
   final AccountService _accountService = AccountService();
-  final FirebaseAuth _auth = FirebaseAuth.instance; // FirebaseAuth örneği
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   List<Map<String, dynamic>> _accounts = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    setState(() {
-      _loadAccounts();
-    });
+    _loadAccounts();
   }
 
   Future<void> _loadAccounts() async {
+    setState(() {
+      _isLoading = true;
+    });
     _accounts = await _accountService.getAccounts(widget.customer.customerId);
     setState(() {
       _isLoading = false;
     });
+  }
+
+  Future<void> _refreshAccounts() async {
+    await _loadAccounts();
   }
 
   // Çıkış onayı penceresi
@@ -66,16 +71,14 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  // Kullanıcı çıkış yapma fonksiyonu
   Future<void> _signOut() async {
-    await _auth.signOut(); // Firebase'den çıkış yap
-    // Çıkış işleminden sonra yapılacak işlemler (örn. anasayfaya yönlendirme)
+    await _auth.signOut(); 
     Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
           builder: (context) => MainScreen(),
         ),
-        (route) => false); // Giriş sayfasına yönlendir
+        (route) => false);
   }
 
   @override
@@ -90,7 +93,7 @@ class _AccountScreenState extends State<AccountScreen> {
         centerTitle: true,
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : _accounts.isEmpty
               ? Center(
                   child: Column(
@@ -102,81 +105,90 @@ class _AccountScreenState extends State<AccountScreen> {
                             GoogleFonts.arvo(fontSize: 22, color: Colors.black),
                       ),
                       TextButton(
-                          onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    AccounAddScreen(customer: widget.customer),
-                              )),
-                          child: Text("Hesap Açmak Ister misiniz ? ",
-                              style: GoogleFonts.arvo(
-                                  fontSize: 15,
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold)))
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: _accounts.length,
-                  itemBuilder: (context, index) {
-                    var account = _accounts[index];
-                    return Container(
-                      padding: const EdgeInsets.only(left: 10, right: 10),
-                      width: MediaQuery.of(context).size.width,
-                      height: MediaQuery.of(context).size.height / 4,
-                      child: Card(
-                        elevation: 1,
-                        color: Colors.white,
-                        child: ListTile(
-                          title: Padding(
-                            padding: const EdgeInsets.only(bottom: 40.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      "IB",
-                                      style: GoogleFonts.arvo(
-                                          fontSize: 22,
-                                          color: Colors.red,
-                                          fontWeight: FontWeight.w500),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      account['accountType'],
-                                      style: GoogleFonts.arvo(
-                                          fontSize: 22,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500),
-                                    ),
-                                    const SizedBox(width: 30),
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 30, top: 8.0),
-                                      child: Text(
-                                        account['iban'],
-                                        style: const TextStyle(fontSize: 11),
-                                        textAlign: TextAlign.end,
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Text(
-                                  "${account['balance']} £",
-                                  style: GoogleFonts.arvo(
-                                      fontSize: 40,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                AccounAddScreen(customer: widget.customer),
+                          ),
+                        ),
+                        child: Text(
+                          "Hesap Açmak Ister misiniz ? ",
+                          style: GoogleFonts.arvo(
+                            fontSize: 15,
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                    );
-                  },
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _refreshAccounts, // Sayfayı yenileme işlemi
+                  child: ListView.builder(
+                    itemCount: _accounts.length,
+                    itemBuilder: (context, index) {
+                      var account = _accounts[index];
+                      return Container(
+                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height / 4,
+                        child: Card(
+                          elevation: 1,
+                          color: Colors.white,
+                          child: ListTile(
+                            title: Padding(
+                              padding: const EdgeInsets.only(bottom: 40.0),
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        "IB",
+                                        style: GoogleFonts.arvo(
+                                            fontSize: 22,
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        account['accountType'],
+                                        style: GoogleFonts.arvo(
+                                            fontSize: 22,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                      const SizedBox(width: 30),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 30, top: 8.0),
+                                        child: Text(
+                                          account['iban'],
+                                          style: const TextStyle(fontSize: 11),
+                                          textAlign: TextAlign.end,
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                  Text(
+                                    "${account['balance']} £",
+                                    style: GoogleFonts.arvo(
+                                        fontSize: 40,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
       endDrawer: Drawer(
         backgroundColor: Colors.white70,
@@ -195,7 +207,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                 ).then((value) {
                   if (value == true) {
-                    _loadAccounts(); // Eğer yeni bir hesap eklenmişse hesapları tekrar yükle
+                    _loadAccounts();
                   }
                 });
               },
@@ -209,7 +221,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             TextButton(
               onPressed: () {
-                return _showSignOutDialog(); // Çıkış onay penceresini göster
+                return _showSignOutDialog();
               },
               child: Text(
                 "Çıkıs Yap",
@@ -231,9 +243,9 @@ class _AccountScreenState extends State<AccountScreen> {
               content: Text(
                 "Yapım Aşamasında",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.red),
+                style: const TextStyle(color: Colors.red),
               ),
-              duration: Duration(seconds: 3),
+              duration: const Duration(seconds: 3),
             ));
           }
           if (value == 2) {
@@ -245,7 +257,6 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                 ));
           }
-          print(value);
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
@@ -256,23 +267,26 @@ class _AccountScreenState extends State<AccountScreen> {
         currentIndex: 0,
         items: const [
           BottomNavigationBarItem(
-              label: "Hesaplar",
-              icon: Icon(
-                Icons.account_balance_wallet_outlined,
-                color: Colors.red,
-              )),
+            label: "Hesaplar",
+            icon: Icon(
+              Icons.account_balance_wallet_outlined,
+              color: Colors.red,
+            ),
+          ),
           BottomNavigationBarItem(
-              label: "Ödemeler",
-              icon: Icon(
-                Icons.wallet_rounded,
-                color: Colors.red,
-              )),
+            label: "Ödemeler",
+            icon: Icon(
+              Icons.wallet_rounded,
+              color: Colors.red,
+            ),
+          ),
           BottomNavigationBarItem(
-              label: "Transferler",
-              icon: Icon(
-                Icons.spatial_tracking_outlined,
-                color: Colors.red,
-              )),
+            label: "Transferler",
+            icon: Icon(
+              Icons.spatial_tracking_outlined,
+              color: Colors.red,
+            ),
+          ),
         ],
       ),
     );
